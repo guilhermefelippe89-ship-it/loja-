@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -96,10 +97,16 @@
 <div id="app"></div>
 <div id="toast-stack" class="toast-stack"></div>
 
+<!-- Firebase (banco de dados compartilhado) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
 <script>
 /* ============================================================
    LOJA VIRTUAL — site estático (HTML/CSS/JS puro, sem build)
-   Dados salvos no localStorage do navegador do lojista.
+   Dados sincronizados via Firebase Firestore (tempo real) —
+   ou salvos no localStorage do navegador se o Firebase não
+   estiver configurado (modo local, cada visitante vê os seus).
    ============================================================ */
 
 const STORAGE_KEY = "loja-virtual-dados";
@@ -126,11 +133,18 @@ function defaultData(){
     products: seedProducts(), clients:[], orders:[]
   };
 }
-function loadData(){
+function loadLocalData(){
   try{ const raw = localStorage.getItem(STORAGE_KEY); if(raw) return JSON.parse(raw); }catch(e){}
   return defaultData();
 }
-function saveData(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data)); }catch(e){ console.error("Falha ao salvar", e); } }
+function saveData(){
+  if(FIREBASE_ENABLED && db){
+    db.collection("loja").doc("dados").set(state.data)
+      .catch((e)=>{ console.error("Erro ao salvar no Firebase", e); toast("Erro ao salvar na nuvem — verifique sua conexão."); });
+  } else {
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data)); }catch(e){ console.error("Falha ao salvar", e); }
+  }
+}
 
 function pixEmvField(id, value){
   const len = String(value.length).padStart(2,"0");
@@ -179,9 +193,31 @@ function buildPixPayload({key, amount, orderId, merchant, city}){
 }
 function qrImageUrl(payload){ return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=${encodeURIComponent(payload)}`; }
 
+/* ---------------- Firebase (banco de dados compartilhado) ----------------
+   Troque os valores abaixo pelos do SEU projeto Firebase (Configurações do
+   projeto → Seus apps → SDK setup and configuration). Enquanto não trocar,
+   o site funciona normalmente, mas cada visitante vê seus próprios dados
+   (modo local), sem sincronizar entre você e os clientes. */
+const firebaseConfig = {
+  apiKey: "AIzaSyA322BzF2n20D-exRjePZ0gWhRF4EIJPw8",
+  authDomain: "loja-mdg.firebaseapp.com",
+  projectId: "loja-mdg",
+  storageBucket: "loja-mdg.firebasestorage.app",
+  messagingSenderId: "346863778520",
+  appId: "1:346863778520:web:1980a1ed81aa9c7dd775ad"
+};
+const FIREBASE_ENABLED = !String(firebaseConfig.apiKey).includes("COLE_AQUI") && typeof firebase !== "undefined";
+let db = null;
+if(FIREBASE_ENABLED){
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+}
+
+
 /* ---------------- estado global ---------------- */
 const state = {
-  data: loadData(),
+  data: defaultData(),
+  ready: false,
   ui: {
     dark:false, role:"cliente", adminAuthed:false,
     clientTab:"loja", adminTab:"visao",
@@ -221,12 +257,23 @@ function rerender(){
 function render(){
   document.body.setAttribute("data-theme", state.ui.dark ? "dark" : "light");
   const app = document.getElementById("app");
+  if(!state.ready){
+    app.innerHTML = `<div class="container" style="padding-top:80px;text-align:center;" class="muted">Carregando loja…</div>`;
+    return;
+  }
   const s = state.ui;
   let body;
   if(s.role==="admin" && !s.adminAuthed) body = renderAdminLogin();
   else if(s.role==="admin") body = renderAdminPanel();
   else body = renderClientApp();
-  app.innerHTML = renderTopBar() + `<div class="container" style="padding-top:20px;">${body}</div>` + (s.role==="cliente" ? renderBottomNav() : "");
+  const banner = FIREBASE_ENABLED ? "" : `
+    <div class="container" style="padding-top:14px;">
+      <div class="card" style="border-color:var(--accent);background:var(--surface2);">
+        <b>Modo local:</b> este navegador não está sincronizado com os outros.
+        <span class="muted">Configure o Firebase no código para os clientes verem seus produtos em tempo real.</span>
+      </div>
+    </div>`;
+  app.innerHTML = renderTopBar() + banner + `<div class="container" style="padding-top:20px;">${body}</div>` + (s.role==="cliente" ? renderBottomNav() : "");
 }
 
 function renderTopBar(){
@@ -866,7 +913,31 @@ document.getElementById("app").addEventListener("click", (e)=>{
   doAction(btn.dataset.action, btn.dataset, btn);
 });
 
-render();
+function initApp(){
+  if(FIREBASE_ENABLED && db){
+    db.collection("loja").doc("dados").onSnapshot((doc)=>{
+      if(doc.exists){
+        state.data = doc.data();
+      } else {
+        state.data = defaultData();
+        db.collection("loja").doc("dados").set(state.data);
+      }
+      state.ready = true;
+      rerender();
+    }, (err)=>{
+      console.error("Erro Firebase", err);
+      toast("Não foi possível conectar ao Firebase — usando dados locais.");
+      state.data = loadLocalData();
+      state.ready = true;
+      rerender();
+    });
+  } else {
+    state.data = loadLocalData();
+    state.ready = true;
+    render();
+  }
+}
+initApp();
 </script>
 </body>
 </html>
