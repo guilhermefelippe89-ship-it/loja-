@@ -1,0 +1,9 @@
+[build]
+  # Site estático (HTML/CSS/JS puro) — não há etapa de build
+  command = ""
+  publish = "."
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

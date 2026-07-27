@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Loja Virtual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F5F6F2; --surface:#FFFFFF; --surface2:#EFF2ED; --ink:#13201B; --muted:#63756B;
+    --line:#E1E4DC; --brand:#0F6B4F; --brandDark:#0B4E3A; --accent:#FF6A45; --danger:#B14343;
+  }
+  [data-theme="dark"]{
+    --bg:#0E1613; --surface:#16211C; --surface2:#1D2A23; --ink:#EAF0EC; --muted:#8FA098;
+    --line:#24322B; --brand:#3FCB93; --brandDark:#229E6E; --accent:#FF8464; --danger:#E0554A;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--ink); font-family:'Inter',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased; min-height:100vh;
+  }
+  .f-display{font-family:'Fraunces',serif;}
+  .f-mono{font-family:'JetBrains Mono',monospace;}
+  a{color:inherit;}
+  button{font-family:inherit; cursor:pointer;}
+  input,textarea,select{
+    background:var(--surface); border:1px solid var(--line); color:var(--ink);
+    border-radius:10px; padding:9px 12px; font-size:14px; width:100%; font-family:inherit;
+  }
+  input:focus,textarea:focus,select:focus{outline:2px solid var(--brand); outline-offset:1px; border-color:var(--brand);}
+  .field-label{font-size:12px; font-weight:600; color:var(--muted); margin-bottom:4px; display:block;}
+  .container{max-width:960px; margin:0 auto; padding:0 16px;}
+  .surface{background:var(--surface); border:1px solid var(--line);}
+  .surface2{background:var(--surface2);}
+  .muted{color:var(--muted);}
+  .brand-text{color:var(--brand);}
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px;}
+  .flex{display:flex;} .grid{display:grid;}
+  .items-center{align-items:center;} .justify-between{justify-content:space-between;} .justify-center{justify-content:center;}
+  .flex-col{flex-direction:column;} .flex-wrap{flex-wrap:wrap;} .flex-1{flex:1; min-width:0;}
+  .gap-1{gap:4px;} .gap-2{gap:8px;} .gap-3{gap:12px;} .gap-4{gap:16px;}
+  .grid-cols-2{grid-template-columns:repeat(2,1fr);} .grid-cols-3{grid-template-columns:repeat(3,1fr);}
+  .p-3{padding:12px;} .p-4{padding:16px;} .p-5{padding:20px;} .py-2{padding-top:8px;padding-bottom:8px;}
+  .py-3{padding-top:12px;padding-bottom:12px;} .px-3{padding-left:12px;padding-right:12px;} .px-4{padding-left:16px;padding-right:16px;}
+  .mb-1{margin-bottom:4px;} .mb-2{margin-bottom:8px;} .mb-3{margin-bottom:12px;} .mb-4{margin-bottom:16px;} .mb-5{margin-bottom:20px;}
+  .mt-1{margin-top:4px;} .mt-2{margin-top:8px;} .mt-3{margin-top:12px;} .mt-4{margin-top:16px;} .mt-5{margin-top:20px;}
+  .rounded{border-radius:10px;} .rounded-lg{border-radius:12px;} .rounded-xl{border-radius:16px;} .rounded-full{border-radius:999px;}
+  .text-xs{font-size:11.5px;} .text-sm{font-size:13.5px;} .text-base{font-size:15px;} .text-lg{font-size:18px;} .text-xl{font-size:21px;} .text-2xl{font-size:26px;}
+  .font-semibold{font-weight:600;} .font-bold{font-weight:700;}
+  .truncate{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .w-full{width:100%;} .text-center{text-align:center;}
+  .shrink-0{flex-shrink:0;}
+  .dashed{border-top:1.5px dashed var(--line);}
+  .btn{border:none; font-weight:600; border-radius:12px; padding:10px 14px; font-size:14px; transition:.15s;}
+  .btn-primary{background:var(--brand); color:#fff;} .btn-primary:hover{background:var(--brandDark);}
+  .btn-accent{background:var(--accent); color:#1a1006; font-weight:700;} .btn-accent:hover{filter:brightness(1.05);}
+  .btn-ghost{background:transparent; border:1px solid var(--line); color:var(--ink);} .btn-ghost:hover{background:var(--surface2);}
+  .btn-danger{background:var(--danger); color:#fff;}
+  .btn:disabled{opacity:.4; cursor:not-allowed;}
+  .btn-sm{padding:7px 12px; font-size:12.5px; border-radius:10px;}
+  .chip{border:1px solid var(--line); border-radius:999px; padding:6px 13px; font-size:12.5px; font-weight:600; white-space:nowrap; cursor:pointer; background:var(--surface); color:var(--ink); transition:.15s;}
+  .chip.active{background:var(--brand); color:#fff; border-color:var(--brand);}
+  .chip-row{display:flex; gap:8px; overflow-x:auto; padding-bottom:10px;}
+  .status-dot{width:8px; height:8px; border-radius:999px; display:inline-block;}
+  .icon-btn{background:transparent; border:1px solid var(--line); border-radius:999px; padding:8px; display:flex; align-items:center; justify-content:center;}
+  .icon-btn:hover{background:var(--surface2);}
+  .topbar{background:var(--surface2); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:20;}
+  .bottomnav{position:fixed; bottom:0; left:0; right:0; background:var(--surface2); border-top:1px solid var(--line); z-index:20;}
+  .nav-btn{background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 18px; color:var(--muted); font-size:11px; font-weight:600; position:relative;}
+  .nav-btn.active{color:var(--brand);}
+  .badge{position:absolute; top:-4px; right:6px; background:var(--accent); color:#fff; border-radius:999px; font-size:10px; font-weight:700; min-width:16px; height:16px; display:flex; align-items:center; justify-content:center; padding:0 3px;}
+  .prod-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:14px;}
+  @media(min-width:640px){.prod-grid{grid-template-columns:repeat(3,1fr);}}
+  .prod-thumb{aspect-ratio:1; background:var(--surface2); display:flex; align-items:center; justify-content:center; font-size:34px; background-size:cover; background-position:center; border-radius:16px 16px 0 0;}
+  .prod-card{background:var(--surface); border:1px solid var(--line); border-radius:16px; overflow:hidden; display:flex; flex-direction:column;}
+  .receipt{background:var(--surface); position:relative; border-radius:6px; box-shadow:0 10px 30px -12px rgba(0,0,0,.25); padding:20px;}
+  .receipt::before,.receipt::after{content:""; position:absolute; left:0; right:0; height:10px; background-image:radial-gradient(circle at 8px 5px, var(--bg) 5px, transparent 5.5px); background-size:16px 10px; background-repeat:repeat-x;}
+  .receipt::before{top:-5px;} .receipt::after{bottom:-5px; transform:rotate(180deg);}
+  .empty-state{display:flex; flex-direction:column; align-items:center; text-align:center; padding:56px 20px; gap:8px; color:var(--muted);}
+  .empty-state .title{color:var(--ink); font-weight:600; font-size:14px;}
+  .empty-state .sub{font-size:12.5px; max-width:240px;}
+  .toast-stack{position:fixed; bottom:16px; right:16px; display:flex; flex-direction:column; gap:8px; z-index:50; max-width:300px;}
+  .toast{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px 14px; font-size:13px; display:flex; align-items:center; gap:8px; box-shadow:0 8px 24px -8px rgba(0,0,0,.25); animation:toastIn .25s ease;}
+  @keyframes toastIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+  .pulse-in{animation:pulseIn .18s ease;} @keyframes pulseIn{from{opacity:0; transform:scale(.97);} to{opacity:1; transform:scale(1);}}
+  input[type="search"i]{padding-left:34px;}
+  .search-wrap{position:relative;}
+  .search-wrap .ico{position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:14px;}
+  #app{padding-bottom:78px;}
+  ::-webkit-scrollbar{height:6px; width:6px;} ::-webkit-scrollbar-thumb{background:var(--line); border-radius:999px;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast-stack" class="toast-stack"></div>
+
+<script>
+/* ============================================================
+   LOJA VIRTUAL — site estático (HTML/CSS/JS puro, sem build)
+   Dados salvos no localStorage do navegador do lojista.
+   ============================================================ */
+
+const STORAGE_KEY = "loja-virtual-dados";
+const CATEGORIES = ["Roupas","Acessórios","Calçados","Casa","Outros"];
+const STATUS_FLOW = ["pendente","pago","enviado","entregue"];
+const STATUS_LABEL = {pendente:"Pendente",pago:"Pago",enviado:"Enviado",entregue:"Entregue",cancelado:"Cancelado"};
+const STATUS_COLOR = {pendente:"#C99A22",pago:"#0F6B4F",enviado:"#3D6FD1",entregue:"#2E9E5B",cancelado:"#B14343"};
+
+const uid = (p) => `${p}-${Math.random().toString(36).slice(2,9)}`;
+const brl = (v) => (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const todayISO = () => new Date().toISOString();
+const esc = (s="") => String(s).replace(/[&<>"']/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function seedProducts(){
+  return [
+    {id:uid("p"), name:"Camiseta Essencial", price:59.9, description:"Camiseta 100% algodão, corte reto.", image:"", stock:24, category:"Roupas"},
+    {id:uid("p"), name:"Boné Aba Curva", price:79.9, description:"Boné ajustável, bordado frontal.", image:"", stock:12, category:"Acessórios"},
+    {id:uid("p"), name:"Tênis Urbano", price:219.9, description:"Tênis leve para o dia a dia.", image:"", stock:8, category:"Calçados"},
+  ];
+}
+function defaultData(){
+  return {
+    settings:{storeName:"Minha Loja", logoEmoji:"🛍️", pixKey:"minhachave@email.com", city:"São Paulo", deliveryFee:12, adminPassword:"admin123"},
+    products: seedProducts(), clients:[], orders:[]
+  };
+}
+function loadData(){
+  try{ const raw = localStorage.getItem(STORAGE_KEY); if(raw) return JSON.parse(raw); }catch(e){}
+  return defaultData();
+}
+function saveData(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data)); }catch(e){ console.error("Falha ao salvar", e); } }
+
+function pixEmvField(id, value){
+  const len = String(value.length).padStart(2,"0");
+  return `${id}${len}${value}`;
+}
+function pixSanitize(str, max){
+  let s = String(str||"")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"") // remove acentos
+    .toUpperCase()
+    .replace(/[^A-Z0-9 ]/g,"")
+    .trim();
+  if(!s) s = "LOJA";
+  return s.slice(0, max);
+}
+function pixCrc16(payload){
+  let crc = 0xFFFF;
+  for(let i=0;i<payload.length;i++){
+    crc ^= (payload.charCodeAt(i) << 8);
+    for(let j=0;j<8;j++){
+      crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xFFFF : (crc << 1) & 0xFFFF;
+    }
+  }
+  return crc.toString(16).toUpperCase().padStart(4,"0");
+}
+function buildPixPayload({key, amount, orderId, merchant, city}){
+  const chave = String(key||"").trim();
+  const merchantAccount = pixEmvField("00","br.gov.bcb.pix") + pixEmvField("01", chave);
+  const name = pixSanitize(merchant, 25);
+  const cityName = pixSanitize(city || "SAO PAULO", 15);
+  const txid = (String(orderId||"").replace(/[^A-Za-z0-9]/g,"").slice(0,25)) || "***";
+
+  let payload =
+    pixEmvField("00","01") +                 // Payload Format Indicator
+    pixEmvField("01","12") +                 // Ponto de Iniciação: 12 = valor fixo (uma cobrança)
+    pixEmvField("26", merchantAccount) +      // Dados da conta PIX (GUI + chave)
+    pixEmvField("52","0000") +                // Merchant Category Code
+    pixEmvField("53","986") +                 // Moeda: Real (986)
+    (amount ? pixEmvField("54", Number(amount).toFixed(2)) : "") + // Valor
+    pixEmvField("58","BR") +                  // País
+    pixEmvField("59", name) +                 // Nome do recebedor
+    pixEmvField("60", cityName) +             // Cidade do recebedor
+    pixEmvField("62", pixEmvField("05", txid)) + // Identificador da transação (txid)
+    "6304";                                   // início do CRC (ID+tamanho fixos)
+
+  return payload + pixCrc16(payload);
+}
+function qrImageUrl(payload){ return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=${encodeURIComponent(payload)}`; }
+
+/* ---------------- estado global ---------------- */
+const state = {
+  data: loadData(),
+  ui: {
+    dark:false, role:"cliente", adminAuthed:false,
+    clientTab:"loja", adminTab:"visao",
+    category:"Todas", search:"", cart:[], // {productId, qty}
+    cartStep:"carrinho", deliveryType:"entrega", pendingOrderId:null,
+    phoneLookup:"",
+    editingProduct:null, confirmDeleteProduct:null,
+    filterStatus:"todos", filterBairro:"todos",
+    openClientId:null, loginError:"",
+  }
+};
+
+function update(fn){ fn(state.data); saveData(); }
+function toast(msg){
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.innerHTML = `<span>🔔</span><span>${esc(msg)}</span>`;
+  document.getElementById("toast-stack").appendChild(el);
+  setTimeout(()=>el.remove(), 3800);
+}
+
+/* ---------------- preservar foco em inputs ao re-renderizar ---------------- */
+function rerender(){
+  const active = document.activeElement;
+  let savedId=null, savedStart=null, savedEnd=null;
+  if(active && active.id && (active.tagName==="INPUT"||active.tagName==="TEXTAREA")){
+    savedId = active.id; savedStart = active.selectionStart; savedEnd = active.selectionEnd;
+  }
+  render();
+  if(savedId){
+    const el = document.getElementById(savedId);
+    if(el){ el.focus(); try{ el.setSelectionRange(savedStart, savedEnd); }catch(e){} }
+  }
+}
+
+/* ================= RENDER PRINCIPAL ================= */
+function render(){
+  document.body.setAttribute("data-theme", state.ui.dark ? "dark" : "light");
+  const app = document.getElementById("app");
+  const s = state.ui;
+  let body;
+  if(s.role==="admin" && !s.adminAuthed) body = renderAdminLogin();
+  else if(s.role==="admin") body = renderAdminPanel();
+  else body = renderClientApp();
+  app.innerHTML = renderTopBar() + `<div class="container" style="padding-top:20px;">${body}</div>` + (s.role==="cliente" ? renderBottomNav() : "");
+}
+
+function renderTopBar(){
+  const st = state.data.settings; const s = state.ui;
+  return `
+  <div class="topbar">
+    <div class="container flex items-center justify-between" style="padding-top:12px;padding-bottom:12px;">
+      <div class="flex items-center gap-2" style="min-width:0;">
+        <span style="font-size:24px;">${st.logoEmoji}</span>
+        <span class="f-display text-lg font-semibold truncate">${esc(st.storeName)}</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button class="icon-btn" data-action="toggle-theme" title="Alternar tema">${s.dark ? "☀️" : "🌙"}</button>
+        ${s.role==="cliente"
+          ? `<button class="btn-ghost btn-sm rounded-full" data-action="go-admin">🔑 Sou o lojista</button>`
+          : `<button class="btn-ghost btn-sm rounded-full" data-action="admin-logout">↩ Sair do painel</button>`}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderBottomNav(){
+  const s = state.ui;
+  const cartCount = s.cart.reduce((sum,c)=>sum+c.qty,0);
+  const items = [
+    {id:"loja", label:"Loja", icon:"🏬"},
+    {id:"carrinho", label:"Carrinho", icon:"🛒", badge:cartCount},
+    {id:"pedidos", label:"Meus pedidos", icon:"🧾"},
+  ];
+  return `<div class="bottomnav"><div class="container flex items-center justify-around" style="padding-top:8px;padding-bottom:8px;">
+    ${items.map(it=>{
+      const active = s.clientTab===it.id || (s.clientTab==="confirmacao" && it.id==="carrinho");
+      return `<button class="nav-btn ${active?"active":""}" data-action="nav" data-tab="${it.id}">
+        <span style="position:relative;font-size:18px;">${it.icon}${it.badge?`<span class="badge">${it.badge}</span>`:""}</span>
+        <span>${it.label}</span>
+      </button>`;
+    }).join("")}
+  </div></div>`;
+}
+
+function emptyState(title, sub, icon="📦"){
+  return `<div class="empty-state"><div style="font-size:30px;">${icon}</div><div class="title">${esc(title)}</div><div class="sub">${esc(sub)}</div></div>`;
+}
+
+/* ================= LOGIN ADMIN ================= */
+function renderAdminLogin(){
+  const st = state.data.settings;
+  return `
+  <div style="max-width:380px;margin:0 auto;padding-top:40px;">
+    <button class="btn-ghost btn-sm rounded mb-4" data-action="admin-back">← Voltar para a loja</button>
+    <div class="card pulse-in">
+      <h2 class="f-display text-xl font-semibold mb-1">Painel do lojista</h2>
+      <p class="muted text-sm mb-4">Entre com a senha de administrador.</p>
+      <label class="field-label">Senha</label>
+      <input id="admin-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter') doAction('admin-login-submit')" />
+      ${state.ui.loginError ? `<p class="text-xs mt-2" style="color:var(--danger)">${esc(state.ui.loginError)}</p>` : ""}
+      <button class="btn btn-primary w-full mt-4" data-action="admin-login-submit">Entrar</button>
+      <p class="muted text-xs mt-3">Senha padrão de teste: <span class="f-mono">${esc(st.adminPassword)}</span> (altere em Configurações).</p>
+    </div>
+  </div>`;
+}
+
+/* ================= CLIENTE ================= */
+function renderClientApp(){
+  const s = state.ui;
+  if(s.clientTab==="loja") return renderStore();
+  if(s.clientTab==="carrinho") return renderCart();
+  if(s.clientTab==="confirmacao") return renderConfirmation(state.data.orders.find(o=>o.id===s.pendingOrderId));
+  if(s.clientTab==="pedidos") return renderMyOrders();
+  return "";
+}
+
+function renderStore(){
+  const st = state.data.settings, s = state.ui;
+  const products = state.data.products.filter(p=>{
+    const matchCat = s.category==="Todas" || p.category===s.category;
+    const matchSearch = p.name.toLowerCase().includes(s.search.toLowerCase());
+    return matchCat && matchSearch;
+  });
+  return `
+  <div>
+    <h1 class="f-display text-2xl font-semibold">Bem-vindo à ${esc(st.storeName)} ${st.logoEmoji}</h1>
+    <p class="muted text-sm mt-1 mb-4">Escolha os produtos e finalize pelo PIX em poucos toques.</p>
+    <div class="search-wrap mb-3"><span class="ico">🔍</span>
+      <input id="search-input" placeholder="Buscar produto…" value="${esc(s.search)}" oninput="onSearchInput(this.value)" />
+    </div>
+    <div class="chip-row mb-2">
+      ${["Todas",...CATEGORIES].map(c=>`<button class="chip ${s.category===c?"active":""}" data-action="set-category" data-cat="${esc(c)}">${esc(c)}</button>`).join("")}
+    </div>
+    ${products.length===0 ? emptyState("Nenhum produto encontrado","Tente outra categoria ou termo de busca.") : `
+    <div class="prod-grid">
+      ${products.map(p=>`
+        <div class="prod-card">
+          <div class="prod-thumb" style="${p.image?`background-image:url('${esc(p.image)}')`:""}">${p.image?"":"📦"}</div>
+          <div class="p-3 flex flex-col gap-1" style="flex:1;">
+            <span class="text-xs font-bold muted" style="text-transform:uppercase;letter-spacing:.03em;">${esc(p.category)}</span>
+            <span class="font-semibold text-sm">${esc(p.name)}</span>
+            <span class="f-mono font-bold text-base brand-text" style="margin-top:auto;">${brl(p.price)}</span>
+            ${p.stock<=0 ? `<span class="text-xs font-semibold" style="color:var(--danger)">Esgotado</span>`
+              : p.stock<=3 ? `<span class="text-xs font-semibold" style="color:var(--accent)">Últimas ${p.stock} unid.</span>` : ""}
+            <button class="btn btn-primary btn-sm w-full mt-1" ${p.stock<=0?"disabled":""} data-action="add-cart" data-id="${p.id}">Comprar</button>
+          </div>
+        </div>`).join("")}
+    </div>`}
+  </div>`;
+}
+
+function currentCartItems(){
+  return state.ui.cart.map(c=>{
+    const product = state.data.products.find(p=>p.id===c.productId);
+    return product ? {...c, product} : null;
+  }).filter(Boolean);
+}
+
+function renderCart(){
+  const s = state.ui;
+  const cartItems = currentCartItems();
+  const cartTotal = cartItems.reduce((sum,c)=>sum+c.product.price*c.qty,0);
+
+  if(cartItems.length===0 && s.cartStep==="carrinho"){
+    return emptyState("Seu carrinho está vazio","Volte à loja e adicione alguns produtos.","🛒");
+  }
+
+  if(s.cartStep==="carrinho"){
+    return `<div style="max-width:460px;margin:0 auto;">
+      <h2 class="f-display text-xl font-semibold mb-4">Seu carrinho</h2>
+      <div class="flex flex-col gap-2 mb-4">
+        ${cartItems.map(c=>`
+          <div class="card p-3 flex items-center gap-3">
+            <div class="shrink-0" style="width:48px;height:48px;border-radius:10px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:18px;${c.product.image?`background-image:url('${esc(c.product.image)}');background-size:cover;`:""}">${c.product.image?"":"📦"}</div>
+            <div class="flex-1">
+              <div class="text-sm font-semibold truncate">${esc(c.product.name)}</div>
+              <div class="f-mono text-xs brand-text font-bold">${brl(c.product.price)}</div>
+            </div>
+            <div class="flex items-center gap-1">
+              <button class="icon-btn" style="padding:5px;" data-action="cart-qty" data-id="${c.productId}" data-delta="-1">−</button>
+              <span class="text-sm font-semibold" style="width:20px;text-align:center;">${c.qty}</span>
+              <button class="icon-btn" style="padding:5px;" data-action="cart-qty" data-id="${c.productId}" data-delta="1">+</button>
+            </div>
+            <button class="icon-btn" style="color:var(--danger);padding:5px;" data-action="cart-remove" data-id="${c.productId}">🗑</button>
+          </div>`).join("")}
+      </div>
+      <div class="dashed" style="padding-top:10px;" class="flex justify-between text-sm"><span class="muted">Subtotal</span><span class="f-mono">${brl(cartTotal)}</span></div>
+      <button class="btn btn-accent w-full mt-4" data-action="cart-continue">Continuar →</button>
+    </div>`;
+  }
+
+  // step "dados"
+  const deliveryFee = s.deliveryType==="entrega" ? state.data.settings.deliveryFee : 0;
+  const total = cartTotal + deliveryFee;
+  return `<div style="max-width:460px;margin:0 auto;">
+    <button class="btn-ghost btn-sm rounded mb-4" data-action="cart-back">← Voltar ao carrinho</button>
+    <h2 class="f-display text-xl font-semibold mb-4">Seus dados</h2>
+    <div class="flex gap-2 mb-4">
+      <button class="chip ${s.deliveryType==="entrega"?"active":""}" data-action="set-delivery" data-type="entrega">🚚 Entrega</button>
+      <button class="chip ${s.deliveryType==="retirada"?"active":""}" data-action="set-delivery" data-type="retirada">🏬 Retirada</button>
+    </div>
+    <div class="flex flex-col gap-3">
+      <div><label class="field-label">Nome completo</label><input id="f-name" placeholder="Seu nome" /></div>
+      <div><label class="field-label">WhatsApp</label><input id="f-phone" placeholder="(00) 00000-0000" /></div>
+      ${s.deliveryType==="entrega" ? `
+      <div class="grid grid-cols-2 gap-2" style="grid-template-columns:2fr 1fr;">
+        <div><label class="field-label">Rua</label><input id="f-street" placeholder="Rua das Flores" /></div>
+        <div><label class="field-label">Número</label><input id="f-number" placeholder="123" /></div>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div><label class="field-label">Bairro</label><input id="f-neighborhood" placeholder="Centro" /></div>
+        <div><label class="field-label">Cidade</label><input id="f-city" placeholder="Sua cidade" /></div>
+      </div>` : ""}
+    </div>
+    <div class="dashed mt-4" style="padding-top:10px;">
+      <div class="flex justify-between text-sm"><span class="muted">Subtotal</span><span class="f-mono">${brl(cartTotal)}</span></div>
+      <div class="flex justify-between text-sm"><span class="muted">${s.deliveryType==="entrega"?"Entrega":"Retirada"}</span><span class="f-mono">${deliveryFee?brl(deliveryFee):"Grátis"}</span></div>
+      <div class="flex justify-between font-bold mt-1" style="font-size:16px;"><span>Total</span><span class="f-mono brand-text">${brl(total)}</span></div>
+    </div>
+    <button class="btn btn-accent w-full mt-4" data-action="place-order">Gerar PIX e finalizar pedido</button>
+  </div>`;
+}
+
+function renderConfirmation(order){
+  if(!order) return emptyState("Pedido não encontrado","Volte à loja para continuar comprando.");
+  const st = state.data.settings;
+  const payload = buildPixPayload({key:st.pixKey, amount:order.total, orderId:order.id, merchant:st.storeName, city:st.city});
+  return `<div style="max-width:400px;margin:0 auto;" class="pulse-in">
+    <div class="receipt mb-4">
+      <div class="text-center mb-2">
+        <span style="font-size:22px;">${st.logoEmoji}</span>
+        <h3 class="f-display font-semibold text-lg">${esc(st.storeName)}</h3>
+        <span class="muted f-mono text-xs">pedido ${order.id}</span>
+      </div>
+      <div class="dashed f-mono text-sm flex flex-col gap-1" style="padding-top:10px;">
+        ${order.items.map(it=>`<div class="flex justify-between gap-2"><span class="truncate">${it.qty}x ${esc(it.name)}</span><span>${brl(it.price*it.qty)}</span></div>`).join("")}
+        <div class="dashed flex justify-between" style="padding-top:6px;"><span>Subtotal</span><span>${brl(order.subtotal)}</span></div>
+        <div class="flex justify-between"><span>${order.deliveryType==="entrega"?"Entrega":"Retirada"}</span><span>${order.deliveryFee?brl(order.deliveryFee):"grátis"}</span></div>
+        <div class="dashed flex justify-between font-bold" style="padding-top:6px;"><span>Total</span><span class="brand-text">${brl(order.total)}</span></div>
+      </div>
+    </div>
+    <div class="card flex flex-col items-center text-center">
+      <div class="flex items-center gap-1 font-semibold text-sm mb-2">📱 Pague com PIX</div>
+      <img src="${qrImageUrl(payload)}" width="180" height="180" style="border:1px solid var(--line);border-radius:10px;margin-bottom:10px;" alt="QR Code PIX" />
+      <button class="btn btn-ghost btn-sm w-full mb-1" data-action="copy-pix" data-payload="${esc(payload)}">📋 PIX copia e cola</button>
+      <p class="muted text-xs mt-2">Escaneie o QR ou use o copia e cola no app do seu banco. O pagamento cai direto na sua chave PIX — a confirmação aqui no painel ainda é manual (verifique se o valor caiu na sua conta e marque o pedido como "Pago").</p>
+    </div>
+    <button class="btn btn-primary w-full mt-4" data-action="confirmation-done">Voltar à loja</button>
+  </div>`;
+}
+
+function renderMyOrders(){
+  const s = state.ui;
+  const orders = s.phoneLookup.trim()
+    ? state.data.orders.filter(o=>o.clientPhone.replace(/\D/g,"")===s.phoneLookup.replace(/\D/g,""))
+        .sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))
+    : [];
+  return `<div style="max-width:460px;margin:0 auto;">
+    <h2 class="f-display text-xl font-semibold mb-3">Meus pedidos</h2>
+    <div class="search-wrap mb-4"><span class="ico">📞</span>
+      <input id="phone-lookup" placeholder="Digite seu WhatsApp para consultar" value="${esc(s.phoneLookup)}" oninput="onPhoneLookupInput(this.value)" />
+    </div>
+    ${!s.phoneLookup.trim() ? emptyState("Consulte seus pedidos","Informe o WhatsApp usado na compra.","🧾")
+      : orders.length===0 ? emptyState("Nenhum pedido encontrado","Confira se digitou o número corretamente.")
+      : `<div class="flex flex-col gap-3">${orders.map(orderCard).join("")}</div>`}
+  </div>`;
+}
+
+function orderCard(o){
+  return `<div class="card">
+    <div class="flex items-center justify-between mb-2">
+      <span class="f-mono text-xs muted">${o.id}</span>
+      ${statusBadge(o.status)}
+    </div>
+    <div class="text-sm flex flex-col gap-1 mb-2">
+      ${o.items.map(it=>`<div class="flex justify-between muted"><span>${it.qty}x ${esc(it.name)}</span><span class="f-mono">${brl(it.price*it.qty)}</span></div>`).join("")}
+    </div>
+    <div class="dashed flex justify-between font-bold text-sm" style="padding-top:8px;"><span>Total</span><span class="brand-text f-mono">${brl(o.total)}</span></div>
+    <div class="muted text-xs mt-1">${new Date(o.createdAt).toLocaleString("pt-BR")}</div>
+  </div>`;
+}
+function statusBadge(status){
+  const c = STATUS_COLOR[status];
+  return `<span class="chip" style="border-color:${c};color:${c};display:inline-flex;align-items:center;gap:6px;"><span class="status-dot" style="background:${c}"></span>${STATUS_LABEL[status]}</span>`;
+}
+
+/* ================= ADMIN ================= */
+function renderAdminPanel(){
+  const s = state.ui;
+  const tabs = [["visao","📊 Visão geral"],["produtos","📦 Produtos"],["pedidos","🧾 Pedidos"],["clientes","👤 Clientes"],["config","⚙️ Config."]];
+  let body;
+  if(s.adminTab==="visao") body = renderDashboard();
+  else if(s.adminTab==="produtos") body = renderProductsAdmin();
+  else if(s.adminTab==="pedidos") body = renderOrdersAdmin();
+  else if(s.adminTab==="clientes") body = renderClientsAdmin();
+  else body = renderSettingsAdmin();
+
+  return `<div class="chip-row mb-2">
+    ${tabs.map(([id,label])=>`<button class="chip ${s.adminTab===id?"active":""}" data-action="admin-tab" data-tab="${id}">${label}</button>`).join("")}
+  </div>${body}`;
+}
+
+function renderDashboard(){
+  const d = state.data;
+  const paidOrders = d.orders.filter(o=>["pago","enviado","entregue"].includes(o.status));
+  const revenue = paidOrders.reduce((s,o)=>s+o.total,0);
+  const inRange = (o,days) => (Date.now()-new Date(o.createdAt).getTime())/86400000 <= days;
+  const revDay = paidOrders.filter(o=>inRange(o,1)).reduce((s,o)=>s+o.total,0);
+  const revWeek = paidOrders.filter(o=>inRange(o,7)).reduce((s,o)=>s+o.total,0);
+  const revMonth = paidOrders.filter(o=>inRange(o,30)).reduce((s,o)=>s+o.total,0);
+  const lowStock = d.products.filter(p=>p.stock<=3);
+  const pendingCount = d.orders.filter(o=>o.status==="pendente").length;
+
+  return `<div class="flex flex-col gap-4">
+    <div class="grid grid-cols-2" style="gap:12px;grid-template-columns:repeat(2,1fr);">
+      ${statCard("📈","Faturamento total", brl(revenue))}
+      ${statCard("🧾","Pedidos", d.orders.length, `${pendingCount} pendentes`)}
+      ${statCard("👤","Clientes", d.clients.length)}
+      ${statCard("📦","Estoque baixo", lowStock.length, "", lowStock.length>0)}
+    </div>
+    <div class="card">
+      <h3 class="font-semibold text-sm mb-3">Relatório de faturamento</h3>
+      <div class="grid grid-cols-3" style="gap:10px;">
+        ${reportBlock("Hoje", revDay)}${reportBlock("Últimos 7 dias", revWeek)}${reportBlock("Últimos 30 dias", revMonth)}
+      </div>
+    </div>
+    ${lowStock.length>0 ? `<div class="card"><h3 class="font-semibold text-sm mb-3">📦 Estoque para repor</h3>
+      <div class="flex flex-col gap-2">${lowStock.map(p=>`<div class="flex justify-between text-sm"><span>${esc(p.name)}</span><span class="font-semibold" style="color:${p.stock===0?"var(--danger)":"var(--accent)"}">${p.stock===0?"Esgotado":`${p.stock} unid.`}</span></div>`).join("")}</div></div>` : ""}
+    <div class="card">
+      <h3 class="font-semibold text-sm mb-3">Últimos pedidos</h3>
+      ${d.orders.length===0 ? `<p class="muted text-sm">Nenhum pedido ainda.</p>` : `
+      <div class="flex flex-col gap-3">
+        ${d.orders.slice(0,5).map(o=>`
+          <div class="flex items-center justify-between text-sm dashed" style="padding-top:8px;">
+            <div style="min-width:0;">
+              <div class="font-semibold truncate">${esc(o.clientName)}</div>
+              <div class="muted text-xs">${new Date(o.createdAt).toLocaleString("pt-BR")}</div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="f-mono font-semibold">${brl(o.total)}</span>${statusBadge(o.status)}
+            </div>
+          </div>`).join("")}
+      </div>`}
+    </div>
+  </div>`;
+}
+function statCard(icon,label,value,sub,warn){
+  return `<div class="card">
+    <div class="flex items-center gap-1 muted text-xs font-semibold mb-1">${icon} ${label}</div>
+    <div class="text-xl font-bold f-display" style="${warn?"color:var(--danger)":""}">${value}</div>
+    ${sub?`<div class="muted text-xs mt-1">${sub}</div>`:""}
+  </div>`;
+}
+function reportBlock(label,value){
+  return `<div class="surface2 rounded-lg text-center p-3"><div class="muted text-xs font-semibold mb-1">${label}</div><div class="f-mono font-bold text-sm">${brl(value)}</div></div>`;
+}
+
+/* --- Produtos --- */
+function renderProductsAdmin(){
+  const d = state.data, s = state.ui;
+  const editing = s.editingProduct;
+  const editProduct = editing && editing!=="new" ? d.products.find(p=>p.id===editing) : null;
+  return `<div class="flex flex-col gap-4">
+    <div class="flex items-center justify-between">
+      <h2 class="f-display text-lg font-semibold">Produtos (${d.products.length})</h2>
+      <button class="btn btn-primary btn-sm" data-action="new-product">+ Novo produto</button>
+    </div>
+    ${editing ? `
+    <div class="card pulse-in">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-sm">${editing==="new"?"Novo produto":"Editar produto"}</h3>
+        <button class="icon-btn" data-action="cancel-edit-product">✕</button>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="field-label">Nome</label><input id="pf-name" value="${esc(editProduct?.name||"")}" /></div>
+        <div><label class="field-label">Preço (R$)</label><input id="pf-price" type="number" step="0.01" value="${editProduct?.price??""}" /></div>
+        <div><label class="field-label">Estoque</label><input id="pf-stock" type="number" value="${editProduct?.stock??""}" /></div>
+        <div><label class="field-label">Categoria</label>
+          <select id="pf-category">${CATEGORIES.map(c=>`<option value="${c}" ${editProduct?.category===c?"selected":""}>${c}</option>`).join("")}</select>
+        </div>
+        <div style="grid-column:1/-1;">
+          <label class="field-label">Foto do produto</label>
+          <div class="flex items-center gap-3">
+            <img id="pf-image-preview" src="${esc(editProduct?.image||"")}" style="width:56px;height:56px;border-radius:10px;object-fit:cover;background:var(--surface2);border:1px solid var(--line);${editProduct?.image?"":"display:none;"}" />
+            <div class="flex-1">
+              <input type="file" id="pf-image-file" accept="image/*" onchange="handleProductImageFile(this)" style="padding:6px;font-size:12.5px;" />
+              <div class="muted text-xs mt-1">Envie uma foto do seu celular/computador, ou cole um link abaixo</div>
+            </div>
+          </div>
+          <input id="pf-image" value="${esc(editProduct?.image||"")}" placeholder="https://… (opcional, se não for enviar arquivo)" class="mt-2" oninput="document.getElementById('pf-image-preview').src=this.value; document.getElementById('pf-image-preview').style.display=this.value?'block':'none';" />
+        </div>
+        <div style="grid-column:1/-1;"><label class="field-label">Descrição</label><textarea id="pf-description" rows="2">${esc(editProduct?.description||"")}</textarea></div>
+      </div>
+      <div class="flex gap-2 mt-4">
+        <button class="btn btn-primary btn-sm" data-action="save-product" data-editing="${editing}">Salvar</button>
+        <button class="btn btn-ghost btn-sm" data-action="cancel-edit-product">Cancelar</button>
+      </div>
+    </div>` : ""}
+    <div class="grid grid-cols-2" style="gap:12px;">
+      ${d.products.map(p=>`
+        <div class="card flex items-center gap-3">
+          <div class="shrink-0" style="width:56px;height:56px;border-radius:10px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px;${p.image?`background-image:url('${esc(p.image)}');background-size:cover;`:""}">${p.image?"":"📦"}</div>
+          <div class="flex-1">
+            <div class="text-sm font-semibold truncate">${esc(p.name)}</div>
+            <div class="muted text-xs">${esc(p.category)} · estoque ${p.stock}</div>
+            <div class="f-mono text-xs font-bold brand-text">${brl(p.price)}</div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <button class="icon-btn" style="padding:6px;" data-action="edit-product" data-id="${p.id}">✏️</button>
+            ${s.confirmDeleteProduct===p.id
+              ? `<button class="icon-btn" style="padding:6px;background:var(--danger);color:#fff;border-color:var(--danger);" data-action="delete-product-confirmed" data-id="${p.id}">✓</button>`
+              : `<button class="icon-btn" style="padding:6px;color:var(--danger);" data-action="confirm-delete-product" data-id="${p.id}">🗑</button>`}
+          </div>
+        </div>`).join("")}
+    </div>
+  </div>`;
+}
+
+/* --- Pedidos --- */
+function renderOrdersAdmin(){
+  const d = state.data, s = state.ui;
+  const bairros = ["todos", ...new Set(d.orders.filter(o=>o.address?.neighborhood).map(o=>o.address.neighborhood))];
+  const filtered = d.orders.filter(o=>{
+    const st_ = s.filterStatus==="todos" || o.status===s.filterStatus;
+    const bh = s.filterBairro==="todos" || o.address?.neighborhood===s.filterBairro;
+    return st_ && bh;
+  });
+  return `<div class="flex flex-col gap-4">
+    <h2 class="f-display text-lg font-semibold">Pedidos (${d.orders.length})</h2>
+    <div class="chip-row" style="flex-wrap:wrap;">
+      ${["todos",...STATUS_FLOW,"cancelado"].map(st_=>`<button class="chip ${s.filterStatus===st_?"active":""}" data-action="filter-status" data-status="${st_}">${st_==="todos"?"Todos":STATUS_LABEL[st_]}</button>`).join("")}
+      ${bairros.length>1 ? `<select id="filter-bairro" style="width:auto;font-size:12.5px;" onchange="onFilterBairro(this.value)">${bairros.map(b=>`<option value="${esc(b)}" ${s.filterBairro===b?"selected":""}>${b==="todos"?"Todos os bairros":esc(b)}</option>`).join("")}</select>` : ""}
+    </div>
+    ${filtered.length===0 ? emptyState("Nenhum pedido aqui","Ajuste os filtros acima.") : `
+    <div class="flex flex-col gap-3">
+      ${filtered.map(o=>`
+        <div class="card">
+          <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
+            <div><span class="font-semibold text-sm">${esc(o.clientName)}</span><span class="muted text-xs f-mono" style="margin-left:8px;">${o.id}</span></div>
+            ${statusBadge(o.status)}
+          </div>
+          <div class="muted text-xs flex flex-wrap gap-3 mb-2">
+            <span>📞 ${esc(o.clientPhone)}</span>
+            ${o.address ? `<span>📍 ${esc(o.address.street)}, ${esc(o.address.number)} — ${esc(o.address.neighborhood)}, ${esc(o.address.city)}</span>` : `<span>Retirada na loja</span>`}
+          </div>
+          <div class="dashed text-sm flex flex-col gap-1 mb-2" style="padding-top:8px;">
+            ${o.items.map(it=>`<div class="flex justify-between muted"><span>${it.qty}x ${esc(it.name)}</span><span class="f-mono">${brl(it.price*it.qty)}</span></div>`).join("")}
+          </div>
+          <div class="flex justify-between font-bold text-sm mb-3"><span>Total</span><span class="brand-text f-mono">${brl(o.total)}</span></div>
+          <div class="chip-row" style="flex-wrap:wrap;">
+            ${STATUS_FLOW.map(st_=>`<button class="chip ${o.status===st_?"active":""}" data-action="set-order-status" data-id="${o.id}" data-status="${st_}">${STATUS_LABEL[st_]}</button>`).join("")}
+            <button class="chip ${o.status==="cancelado"?"active":""}" style="${o.status!=="cancelado"?"color:var(--danger)":""}" data-action="set-order-status" data-id="${o.id}" data-status="cancelado">Cancelar</button>
+          </div>
+        </div>`).join("")}
+    </div>`}
+  </div>`;
+}
+
+/* --- Clientes --- */
+function renderClientsAdmin(){
+  const d = state.data, s = state.ui;
+  if(d.clients.length===0) return `<h2 class="f-display text-lg font-semibold mb-4">Clientes (0)</h2>${emptyState("Nenhum cliente ainda","Clientes são salvos automaticamente no primeiro pedido.","👤")}`;
+  return `<div class="flex flex-col gap-4">
+    <h2 class="f-display text-lg font-semibold">Clientes (${d.clients.length})</h2>
+    <div class="flex flex-col gap-2">
+      ${d.clients.map(c=>{
+        const orders = d.orders.filter(o=>o.clientId===c.id);
+        const spent = orders.filter(o=>["pago","enviado","entregue"].includes(o.status)).reduce((s2,o)=>s2+o.total,0);
+        const open = s.openClientId===c.id;
+        return `<div class="card">
+          <button class="flex items-center justify-between w-full" style="background:none;border:none;text-align:left;" data-action="toggle-client" data-id="${c.id}">
+            <div><div class="font-semibold text-sm">${esc(c.name)}</div><div class="muted text-xs">📞 ${esc(c.phone)}</div></div>
+            <div class="text-center" style="text-align:right;"><div class="f-mono text-xs font-bold brand-text">${brl(spent)}</div><div class="muted text-xs">${orders.length} pedido(s)</div></div>
+          </button>
+          ${open ? `<div class="dashed mt-3 flex flex-col gap-2" style="padding-top:10px;">
+            ${c.address?.street ? `<div class="muted text-xs">📍 ${esc(c.address.street)}, ${esc(c.address.number)} — ${esc(c.address.neighborhood)}, ${esc(c.address.city)}</div>` : ""}
+            ${orders.map(o=>`<div class="flex justify-between text-xs"><span class="muted">${new Date(o.createdAt).toLocaleDateString("pt-BR")} · ${o.id}</span><div class="flex items-center gap-2"><span class="f-mono">${brl(o.total)}</span>${statusBadge(o.status)}</div></div>`).join("")}
+          </div>` : ""}
+        </div>`;
+      }).join("")}
+    </div>
+  </div>`;
+}
+
+/* --- Configurações --- */
+function renderSettingsAdmin(){
+  const st = state.data.settings;
+  return `<div style="max-width:420px;" class="flex flex-col gap-3">
+    <h2 class="f-display text-lg font-semibold mb-1">Configurações da loja</h2>
+    <div><label class="field-label">Nome da loja</label><input id="cfg-name" value="${esc(st.storeName)}" /></div>
+    <div><label class="field-label">Logo (emoji)</label><input id="cfg-emoji" value="${esc(st.logoEmoji)}" /></div>
+    <div><label class="field-label">Chave PIX</label><input id="cfg-pix" value="${esc(st.pixKey)}" placeholder="CPF, e-mail, telefone ou chave aleatória" /></div>
+    <div><label class="field-label">Cidade da loja</label><input id="cfg-city" value="${esc(st.city||"")}" placeholder="Ex: São Paulo" /></div>
+    <div><label class="field-label">Taxa de entrega (R$)</label><input id="cfg-fee" type="number" step="0.01" value="${st.deliveryFee}" /></div>
+    <div><label class="field-label">Nova senha do painel (opcional)</label><input id="cfg-newpass" type="password" placeholder="Deixe em branco para manter" /></div>
+    <button class="btn btn-primary mt-2" data-action="save-settings">Salvar configurações</button>
+  </div>`;
+}
+
+/* ================= AÇÕES / EVENTOS ================= */
+function handleProductImageFile(input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  if(!file.type.startsWith("image/")){ toast("Escolha um arquivo de imagem."); return; }
+  if(file.size > 8*1024*1024){ toast("Imagem muito grande (máx. 8MB)."); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxW = 480;
+      const scale = Math.min(1, maxW / img.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+      const sizeKB = Math.round((dataUrl.length * 0.75) / 1024);
+      if(sizeKB > 350){ toast("Foto ainda pesada — tente uma imagem menor ou mais simples."); return; }
+      const imageField = document.getElementById("pf-image");
+      const preview = document.getElementById("pf-image-preview");
+      if(imageField) imageField.value = dataUrl;
+      if(preview){ preview.src = dataUrl; preview.style.display = "block"; }
+      toast("Foto carregada — clique em Salvar para confirmar.");
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function onSearchInput(v){ state.ui.search = v; rerender(); }
+function onPhoneLookupInput(v){ state.ui.phoneLookup = v; rerender(); }
+function onFilterBairro(v){ state.ui.filterBairro = v; rerender(); }
+
+function doAction(action, ds, el){
+  const s = state.ui;
+  switch(action){
+    case "toggle-theme": s.dark = !s.dark; rerender(); break;
+    case "go-admin": s.role="admin"; s.loginError=""; rerender(); break;
+    case "admin-back": s.role="cliente"; rerender(); break;
+    case "admin-logout": s.adminAuthed=false; s.role="cliente"; rerender(); break;
+    case "admin-login-submit": {
+      const val = document.getElementById("admin-pass").value;
+      if(val === state.data.settings.adminPassword){ s.adminAuthed=true; s.loginError=""; }
+      else s.loginError = "Senha incorreta.";
+      rerender(); break;
+    }
+    case "admin-tab": s.adminTab = ds.tab; rerender(); break;
+    case "nav": s.clientTab = ds.tab; rerender(); break;
+    case "set-category": s.category = ds.cat; rerender(); break;
+
+    case "add-cart": {
+      const product = state.data.products.find(p=>p.id===ds.id);
+      if(!product) return;
+      const found = s.cart.find(c=>c.productId===ds.id);
+      if(found){
+        if(found.qty >= product.stock){ toast(`Estoque máximo de "${product.name}" atingido.`); return; }
+        found.qty += 1;
+      } else s.cart.push({productId:ds.id, qty:1});
+      toast(`"${product.name}" adicionado ao carrinho.`);
+      rerender(); break;
+    }
+    case "cart-qty": {
+      const item = s.cart.find(c=>c.productId===ds.id);
+      if(item){ item.qty += Number(ds.delta); if(item.qty<=0) s.cart = s.cart.filter(c=>c.productId!==ds.id); }
+      rerender(); break;
+    }
+    case "cart-remove": s.cart = s.cart.filter(c=>c.productId!==ds.id); rerender(); break;
+    case "cart-continue": s.cartStep="dados"; rerender(); break;
+    case "cart-back": s.cartStep="carrinho"; rerender(); break;
+    case "set-delivery": s.deliveryType = ds.type; rerender(); break;
+
+    case "place-order": {
+      const cartItems = currentCartItems();
+      const cartTotal = cartItems.reduce((sum,c)=>sum+c.product.price*c.qty,0);
+      const name = document.getElementById("f-name").value.trim();
+      const phone = document.getElementById("f-phone").value.trim();
+      const isEntrega = s.deliveryType==="entrega";
+      const street = isEntrega ? document.getElementById("f-street").value.trim() : "";
+      const number = isEntrega ? document.getElementById("f-number").value.trim() : "";
+      const neighborhood = isEntrega ? document.getElementById("f-neighborhood").value.trim() : "";
+      const city = isEntrega ? document.getElementById("f-city").value.trim() : "";
+      if(!name || !phone || (isEntrega && (!street||!number||!neighborhood||!city))){
+        toast("Preencha todos os campos obrigatórios."); return;
+      }
+      const deliveryFee = isEntrega ? state.data.settings.deliveryFee : 0;
+      const total = cartTotal + deliveryFee;
+      const orderId = uid("ped");
+      const digits = phone.replace(/\D/g,"");
+
+      update((d)=>{
+        let client = d.clients.find(c=>c.phone.replace(/\D/g,"")===digits);
+        if(!client){
+          client = {id:uid("cli"), name, phone, address:{street,number,neighborhood,city}, orderIds:[]};
+          d.clients.push(client);
+        } else {
+          client.name = name;
+          if(isEntrega) client.address = {street,number,neighborhood,city};
+        }
+        client.orderIds = [...(client.orderIds||[]), orderId];
+
+        const order = {
+          id:orderId, clientId:client.id, clientName:name, clientPhone:phone,
+          deliveryType:s.deliveryType, address:isEntrega?{street,number,neighborhood,city}:null,
+          items: cartItems.map(c=>({productId:c.product.id, name:c.product.name, price:c.product.price, qty:c.qty})),
+          subtotal:cartTotal, deliveryFee, total, status:"pendente", createdAt:todayISO(), paidAt:null,
+        };
+        d.products = d.products.map(p=>{
+          const inCart = cartItems.find(c=>c.product.id===p.id);
+          return inCart ? {...p, stock:Math.max(0,p.stock-inCart.qty)} : p;
+        });
+        d.orders.unshift(order);
+      });
+
+      toast(`Novo pedido recebido: ${name} — ${brl(total)}`);
+      s.cart = []; s.pendingOrderId = orderId; s.cartStep="carrinho"; s.clientTab="confirmacao";
+      rerender(); break;
+    }
+    case "copy-pix": {
+      const payload = ds.payload;
+      if(navigator.clipboard) navigator.clipboard.writeText(payload).then(()=>toast("Código PIX copiado!")).catch(()=>toast("Não foi possível copiar."));
+      break;
+    }
+    case "confirmation-done": s.clientTab="loja"; s.pendingOrderId=null; rerender(); break;
+
+    case "new-product": s.editingProduct = "new"; rerender(); break;
+    case "edit-product": s.editingProduct = ds.id; rerender(); break;
+    case "cancel-edit-product": s.editingProduct = null; rerender(); break;
+    case "save-product": {
+      const name = document.getElementById("pf-name").value.trim();
+      const price = document.getElementById("pf-price").value;
+      const stock = document.getElementById("pf-stock").value;
+      const category = document.getElementById("pf-category").value;
+      const image = document.getElementById("pf-image").value.trim();
+      const description = document.getElementById("pf-description").value.trim();
+      if(!name || !price){ toast("Preencha nome e preço."); return; }
+      update((d)=>{
+        if(ds.editing==="new"){
+          d.products.push({id:uid("p"), name, price:Number(price), stock:Number(stock)||0, category, image, description});
+        } else {
+          d.products = d.products.map(p=>p.id===ds.editing ? {...p, name, price:Number(price), stock:Number(stock)||0, category, image, description} : p);
+        }
+      });
+      toast(ds.editing==="new" ? "Produto cadastrado." : "Produto atualizado.");
+      s.editingProduct = null; rerender(); break;
+    }
+    case "confirm-delete-product": s.confirmDeleteProduct = ds.id; rerender(); break;
+    case "delete-product-confirmed": {
+      update((d)=>{ d.products = d.products.filter(p=>p.id!==ds.id); });
+      s.confirmDeleteProduct = null; toast("Produto excluído."); rerender(); break;
+    }
+
+    case "filter-status": s.filterStatus = ds.status; rerender(); break;
+    case "set-order-status": {
+      update((d)=>{
+        d.orders = d.orders.map(o=>o.id===ds.id ? {...o, status:ds.status, paidAt: ds.status==="pago" && !o.paidAt ? todayISO() : o.paidAt} : o);
+      });
+      if(ds.status==="pago") toast("Pagamento confirmado ✅");
+      rerender(); break;
+    }
+    case "toggle-client": s.openClientId = s.openClientId===ds.id ? null : ds.id; rerender(); break;
+
+    case "save-settings": {
+      const storeName = document.getElementById("cfg-name").value.trim() || state.data.settings.storeName;
+      const logoEmoji = document.getElementById("cfg-emoji").value.trim() || state.data.settings.logoEmoji;
+      const pixKey = document.getElementById("cfg-pix").value.trim();
+      const city = document.getElementById("cfg-city").value.trim();
+      const deliveryFee = Number(document.getElementById("cfg-fee").value) || 0;
+      const newpass = document.getElementById("cfg-newpass").value.trim();
+      update((d)=>{
+        d.settings = {...d.settings, storeName, logoEmoji, pixKey, city, deliveryFee, adminPassword: newpass ? newpass : d.settings.adminPassword};
+      });
+      toast("Configurações salvas."); rerender(); break;
+    }
+  }
+}
+
+document.getElementById("app").addEventListener("click", (e)=>{
+  const btn = e.target.closest("[data-action]");
+  if(!btn) return;
+  doAction(btn.dataset.action, btn.dataset, btn);
+});
+
+render();
+</script>
+</body>
+</html>
