@@ -138,13 +138,22 @@ function loadLocalData(){
   try{ const raw = localStorage.getItem(STORAGE_KEY); if(raw) return JSON.parse(raw); }catch(e){}
   return defaultData();
 }
-function saveData(){
+function saveLocalAll(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data)); }catch(e){ console.error("Falha ao salvar local", e); }
+}
+/* Salva cada item no seu próprio documento no Firebase — evita estourar o
+   limite de 1MB por documento quando há fotos de produtos. */
+function persist(kind, payload){
   if(FIREBASE_ENABLED && db){
-    db.collection("loja").doc("dados").set(state.data)
-      .catch((e)=>{ console.error("Erro ao salvar no Firebase", e); toast("Erro ao salvar na nuvem — verifique sua conexão."); });
-  } else {
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data)); }catch(e){ console.error("Falha ao salvar", e); }
+    let ref;
+    if(kind==="product") ref = db.collection("produtos").doc(payload.id).set(payload);
+    else if(kind==="deleteProduct") ref = db.collection("produtos").doc(payload.id).delete();
+    else if(kind==="client") ref = db.collection("clientes").doc(payload.id).set(payload);
+    else if(kind==="order") ref = db.collection("pedidos").doc(payload.id).set(payload);
+    else if(kind==="settings") ref = db.collection("config").doc("loja").set(payload);
+    if(ref && ref.catch) ref.catch((e)=>{ console.error("Erro ao salvar no Firebase", e); toast("Erro ao salvar na nuvem — verifique sua conexão."); });
   }
+  saveLocalAll();
 }
 
 function pixEmvField(id, value){
@@ -232,7 +241,6 @@ const state = {
   }
 };
 
-function update(fn){ fn(state.data); saveData(); }
 function toast(msg){
   const el = document.createElement("div");
   el.className = "toast";
@@ -851,29 +859,35 @@ function doAction(action, ds, el){
       const orderId = uid("ped");
       const digits = phone.replace(/\D/g,"");
 
-      update((d)=>{
-        let client = d.clients.find(c=>c.phone.replace(/\D/g,"")===digits);
-        if(!client){
-          client = {id:uid("cli"), name, phone, address:{street,number,neighborhood,city}, orderIds:[]};
-          d.clients.push(client);
-        } else {
-          client.name = name;
-          if(isEntrega) client.address = {street,number,neighborhood,city};
-        }
-        client.orderIds = [...(client.orderIds||[]), orderId];
+      let client = state.data.clients.find(c=>c.phone.replace(/\D/g,"")===digits);
+      if(!client){
+        client = {id:uid("cli"), name, phone, address:{street,number,neighborhood,city}, orderIds:[]};
+        state.data.clients.push(client);
+      } else {
+        client.name = name;
+        if(isEntrega) client.address = {street,number,neighborhood,city};
+      }
+      client.orderIds = [...(client.orderIds||[]), orderId];
 
-        const order = {
-          id:orderId, clientId:client.id, clientName:name, clientPhone:phone,
-          deliveryType:s.deliveryType, address:isEntrega?{street,number,neighborhood,city}:null,
-          items: cartItems.map(c=>({productId:c.product.id, name:c.product.name, price:c.product.price, qty:c.qty})),
-          subtotal:cartTotal, deliveryFee, total, status:"pendente", createdAt:todayISO(), paidAt:null,
-        };
-        d.products = d.products.map(p=>{
-          const inCart = cartItems.find(c=>c.product.id===p.id);
-          return inCart ? {...p, stock:Math.max(0,p.stock-inCart.qty)} : p;
-        });
-        d.orders.unshift(order);
+      const order = {
+        id:orderId, clientId:client.id, clientName:name, clientPhone:phone,
+        deliveryType:s.deliveryType, address:isEntrega?{street,number,neighborhood,city}:null,
+        items: cartItems.map(c=>({productId:c.product.id, name:c.product.name, price:c.product.price, qty:c.qty})),
+        subtotal:cartTotal, deliveryFee, total, status:"pendente", createdAt:todayISO(), paidAt:null,
+      };
+      const changedProducts = [];
+      state.data.products = state.data.products.map(p=>{
+        const inCart = cartItems.find(c=>c.product.id===p.id);
+        if(!inCart) return p;
+        const updated = {...p, stock:Math.max(0,p.stock-inCart.qty)};
+        changedProducts.push(updated);
+        return updated;
       });
+      state.data.orders.unshift(order);
+
+      persist("client", client);
+      persist("order", order);
+      changedProducts.forEach(p=>persist("product", p));
 
       toast(`Novo pedido recebido: ${name} — ${brl(total)}`);
       s.cart = []; s.pendingOrderId = orderId; s.cartStep="carrinho"; s.clientTab="confirmacao";
@@ -897,27 +911,30 @@ function doAction(action, ds, el){
       const image = document.getElementById("pf-image").value.trim();
       const description = document.getElementById("pf-description").value.trim();
       if(!name || !price){ toast("Preencha nome e preço."); return; }
-      update((d)=>{
-        if(ds.editing==="new"){
-          d.products.push({id:uid("p"), name, price:Number(price), stock:Number(stock)||0, category, image, description});
-        } else {
-          d.products = d.products.map(p=>p.id===ds.editing ? {...p, name, price:Number(price), stock:Number(stock)||0, category, image, description} : p);
-        }
-      });
+      const productObj = {
+        id: ds.editing==="new" ? uid("p") : ds.editing,
+        name, price:Number(price), stock:Number(stock)||0, category, image, description
+      };
+      if(ds.editing==="new") state.data.products.push(productObj);
+      else state.data.products = state.data.products.map(p=>p.id===ds.editing ? productObj : p);
+      persist("product", productObj);
       toast(ds.editing==="new" ? "Produto cadastrado." : "Produto atualizado.");
       s.editingProduct = null; rerender(); break;
     }
     case "confirm-delete-product": s.confirmDeleteProduct = ds.id; rerender(); break;
     case "delete-product-confirmed": {
-      update((d)=>{ d.products = d.products.filter(p=>p.id!==ds.id); });
+      state.data.products = state.data.products.filter(p=>p.id!==ds.id);
+      persist("deleteProduct", {id:ds.id});
       s.confirmDeleteProduct = null; toast("Produto excluído."); rerender(); break;
     }
 
     case "filter-status": s.filterStatus = ds.status; rerender(); break;
     case "set-order-status": {
-      update((d)=>{
-        d.orders = d.orders.map(o=>o.id===ds.id ? {...o, status:ds.status, paidAt: ds.status==="pago" && !o.paidAt ? todayISO() : o.paidAt} : o);
-      });
+      const order = state.data.orders.find(o=>o.id===ds.id);
+      if(!order) return;
+      const updatedOrder = {...order, status:ds.status, paidAt: ds.status==="pago" && !order.paidAt ? todayISO() : order.paidAt};
+      state.data.orders = state.data.orders.map(o=>o.id===ds.id ? updatedOrder : o);
+      persist("order", updatedOrder);
       if(ds.status==="pago") toast("Pagamento confirmado ✅");
       rerender(); break;
     }
@@ -930,9 +947,9 @@ function doAction(action, ds, el){
       const city = document.getElementById("cfg-city").value.trim();
       const deliveryFee = Number(document.getElementById("cfg-fee").value) || 0;
       const newpass = document.getElementById("cfg-newpass").value.trim();
-      update((d)=>{
-        d.settings = {...d.settings, storeName, logoEmoji, pixKey, city, deliveryFee, adminPassword: newpass ? newpass : d.settings.adminPassword};
-      });
+      const settingsObj = {...state.data.settings, storeName, logoEmoji, pixKey, city, deliveryFee, adminPassword: newpass ? newpass : state.data.settings.adminPassword};
+      state.data.settings = settingsObj;
+      persist("settings", settingsObj);
       toast("Configurações salvas."); rerender(); break;
     }
   }
@@ -944,23 +961,71 @@ document.getElementById("app").addEventListener("click", (e)=>{
   doAction(btn.dataset.action, btn.dataset, btn);
 });
 
+/* Recupera dados que ficaram no formato antigo (documento único
+   "loja/dados") e move para as novas coleções separadas. Roda uma
+   única vez — depois de migrar, apaga o documento antigo. */
+function migrateOldData(){
+  return db.collection("loja").doc("dados").get().then((oldDoc)=>{
+    if(!oldDoc.exists) return false;
+    const old = oldDoc.data() || {};
+    return Promise.all([
+      db.collection("produtos").get(),
+      db.collection("clientes").get(),
+      db.collection("pedidos").get(),
+    ]).then(([prodSnap, cliSnap, pedSnap])=>{
+      const batch = db.batch();
+      // limpa produtos de exemplo criados por engano antes da correção
+      prodSnap.forEach(d=>batch.delete(d.ref));
+      cliSnap.forEach(d=>batch.delete(d.ref));
+      pedSnap.forEach(d=>batch.delete(d.ref));
+      (old.products||[]).forEach(p=>batch.set(db.collection("produtos").doc(p.id), p));
+      (old.clients||[]).forEach(c=>batch.set(db.collection("clientes").doc(c.id), c));
+      (old.orders||[]).forEach(o=>batch.set(db.collection("pedidos").doc(o.id), o));
+      if(old.settings) batch.set(db.collection("config").doc("loja"), old.settings);
+      batch.delete(oldDoc.ref);
+      return batch.commit();
+    }).then(()=>true);
+  }).catch((e)=>{ console.error("Erro na migração", e); return false; });
+}
+
+const readyFlags = {settings:false, products:false, clients:false, orders:false};
+function markReady(key){
+  readyFlags[key] = true;
+  if(!state.ready && Object.values(readyFlags).every(Boolean)) state.ready = true;
+  rerender();
+}
+
+function initFirebaseSync(){
+  db.collection("config").doc("loja").onSnapshot((doc)=>{
+    if(doc.exists) state.data.settings = doc.data();
+    else db.collection("config").doc("loja").set(state.data.settings);
+    markReady("settings");
+  }, (err)=>{ console.error("Erro Firebase (config)", err); toast("Erro ao sincronizar configurações."); markReady("settings"); });
+
+  db.collection("produtos").onSnapshot((snap)=>{
+    if(snap.empty && readyFlags.products===false){
+      seedProducts().forEach(p=>db.collection("produtos").doc(p.id).set(p));
+    }
+    state.data.products = snap.docs.map(d=>d.data());
+    markReady("products");
+  }, (err)=>{ console.error("Erro Firebase (produtos)", err); toast("Erro ao sincronizar produtos."); markReady("products"); });
+
+  db.collection("clientes").onSnapshot((snap)=>{
+    state.data.clients = snap.docs.map(d=>d.data());
+    markReady("clients");
+  }, (err)=>{ console.error("Erro Firebase (clientes)", err); toast("Erro ao sincronizar clientes."); markReady("clients"); });
+
+  db.collection("pedidos").onSnapshot((snap)=>{
+    state.data.orders = snap.docs.map(d=>d.data()).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+    markReady("orders");
+  }, (err)=>{ console.error("Erro Firebase (pedidos)", err); toast("Erro ao sincronizar pedidos."); markReady("orders"); });
+}
+
 function initApp(){
   if(FIREBASE_ENABLED && db){
-    db.collection("loja").doc("dados").onSnapshot((doc)=>{
-      if(doc.exists){
-        state.data = doc.data();
-      } else {
-        state.data = defaultData();
-        db.collection("loja").doc("dados").set(state.data);
-      }
-      state.ready = true;
-      rerender();
-    }, (err)=>{
-      console.error("Erro Firebase", err);
-      toast("Não foi possível conectar ao Firebase — usando dados locais.");
-      state.data = loadLocalData();
-      state.ready = true;
-      rerender();
+    migrateOldData().then((migrated)=>{
+      if(migrated) toast("Seus produtos e pedidos antigos foram recuperados! ✅");
+      initFirebaseSync();
     });
   } else {
     state.data = loadLocalData();
